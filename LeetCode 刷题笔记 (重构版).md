@@ -12,6 +12,79 @@
 
 双指针是一种通过维护两个指针在序列中同向或相向移动，来降低时间复杂度的技巧。
 
+#### 88. [合并两个有序数组]()
+
+**思路**：**从后往前**进行合并。因为 `nums1` 的尾部是空闲空间，从后往前填充，我们永远不会覆盖掉 `nums1` 中尚未被处理的有效元素。
+
+这个方法被称为**逆向双指针法**。
+
+~~~go
+package main
+
+func merge(nums1 []int, m int, nums2 []int, n int) {
+	// nums1 []int{2,3,4,0,0,0}
+	// m int 3
+	// nums2 []int{1,5,6}
+	// n int 3
+	// Output: nums1 []int{1,2,3,4,5,6}
+	i := m - 1
+	j := n - 1
+	k := m + n - 1
+	for i >= 0 && j >= 0 {
+		if nums1[i] >= nums2[j] {
+			nums1[k] = nums1[i]
+			i--
+		} else {
+			nums1[k] = nums2[j]
+			j--
+		}
+		k--
+	}
+    // 如果nums2还有未被处理的数，那么一定是小于了nums1的最小的数，仅需放在nums1前面即可
+	for j >= 0 {
+		nums1[k] = nums2[j]
+		j--
+		k--
+	}
+}
+~~~
+
+#### 125. [验证回文串](https://leetcode.cn/problems/valid-palindrome/)
+
+**思路**：**初始化指针**：定义两个指针，`left` 指向字符串的开头，`right` 指向字符串的末尾。
+
+**循环比较**：当 `left` 指针在 `right` 指针左边时，进行循环。
+
+- **跳过无效字符**：从左向右移动 `left` 指针，直到它指向一个字母或数字。同样，从右向左移动 `right` 指针，直到它也指向一个字母或数字。
+- **比较字符**：将 `left` 和 `right` 指针所指向的字符统一转换为小写进行比较。
+  - 如果两个字符不相等，说明这个字符串不是回文串，直接返回 `false`。
+  - 如果相等，则将 `left` 指针向右移动一位，`right` 指针向左移动一位，继续下一轮比较。
+
+**得出结论**：如果循环正常结束（即 `left` 越过了 `right`），说明所有对应的字符都相等，该字符串是回文串，返回 `true`。
+
+~~~go
+func isPalindrome(s string) bool {
+    left,right:=0,len(s)-1
+    for left<right{
+        // unicode.IsLetter() 判断是否为字母
+        // unicode.IsDigit() 判断是否为数字
+        for left<right && !unicode.IsLetter(rune(s[left])) && !unicode.IsDigit(rune(s[left])){
+            left++
+        }
+        for left<right && !unicode.IsLetter(rune(s[right])) && !unicode.IsDigit(rune(s[right])){
+            right--
+        }
+        // unicode.ToLower() 转化为小写字母
+        if unicode.ToLower(rune(s[left])) != unicode.ToLower(rune(s[right])){
+            return false
+        }
+        left++
+        right--
+    }
+    return true
+}
+~~~
+
 #### 26. [删除有序数组中的重复项](https://leetcode.cn/problems/remove-duplicates-from-sorted-array/)
 
 **思路**：使用快慢指针（从1开始，数组中的第一个元素不可能是重复的），快指针遍历数组找新的不重复的元素，慢指针指向下一个唯一元素应该被放置的位置。它也代表了到目前为止唯一元素的数量。
@@ -902,6 +975,98 @@ func canConstruct(ransomNote string, magazine string) bool {
 	return true
 }
 ```
+
+### 5. 栈与队列(Stack and Queue)
+
+#### 232. [用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/description/)
+
+**思路**:利用两个栈，一个作为新元素的入口缓冲 (`inStack`)，另一个作为老元素的出口 (`outStack`)。通过在 `outStack` 为空时，将 `inStack` 的元素全部转移到 `outStack` 的方式，完成一次顺序的逆转，从而用 LIFO 的栈模拟出了 FIFO 的队列行为。
+
+~~~go
+package main
+
+import "fmt"
+
+type MyQueue struct {
+	inStack  []int // 输入栈：负责接收所有新加入的元素
+	outStack []int // 输出栈：负责提供队头元素用于 Pop 和 Peek
+}
+
+// Constructor 初始化队列
+func Constructor() MyQueue {
+	return MyQueue{
+		inStack:  make([]int, 0),
+		outStack: make([]int, 0),
+	}
+}
+
+// Push 将元素 x 推到队列的末尾
+func (this *MyQueue) Push(x int) {
+	// 直接将元素压入输入栈
+	this.inStack = append(this.inStack, x)
+}
+
+// transferIfNeeded 是一个辅助函数。
+// 当输出栈为空时，它会将输入栈的所有元素转移到输出栈。
+func (this *MyQueue) transferIfNeeded() {
+	// 只有当输出栈为空时，才需要进行转移操作
+	if len(this.outStack) == 0 {
+		// 循环直到输入栈为空
+		for len(this.inStack) > 0 {
+			// 1. 从输入栈的栈顶弹出一个元素
+			val := this.inStack[len(this.inStack)-1]
+			this.inStack = this.inStack[:len(this.inStack)-1]
+
+			// 2. 将该元素压入输出栈
+			this.outStack = append(this.outStack, val)
+		}
+	}
+}
+
+// Pop 从队列的开头移除并返回元素
+func (this *MyQueue) Pop() int {
+	// 在操作前，确保输出栈有正确的队头元素
+	this.transferIfNeeded()
+
+	// 如果两个栈都为空，这里会 panic，实际应用中可以返回 error
+	// 但根据题目通常的假设，不会对空队列调用 Pop
+
+	// 1. 从输出栈的栈顶获取队头元素
+	val := this.outStack[len(this.outStack)-1]
+	// 2. 将其从输出栈中移除
+	this.outStack = this.outStack[:len(this.outStack)-1]
+
+	return val
+}
+
+// Peek 返回队列的第一个元素（不移除）
+func (this *MyQueue) Peek() int {
+	// 同样，在操作前，确保输出栈有正确的队头元素
+	this.transferIfNeeded()
+
+	// 返回输出栈的栈顶元素，即为队头
+	return this.outStack[len(this.outStack)-1]
+}
+
+// Empty 如果队列为空，则返回 true
+func (this *MyQueue) Empty() bool {
+	// 当且仅当两个栈都为空时，队列才为空
+	return len(this.inStack) == 0 && len(this.outStack) == 0
+}
+
+func main() {
+	// 你可以在这里添加测试代码来验证实现
+	queue := Constructor()
+	queue.Push(1)
+	queue.Push(2)
+	fmt.Println("Peek:", queue.Peek()) // 输出: Peek: 1
+	fmt.Println("Pop:", queue.Pop())   // 输出: Pop: 1
+	fmt.Println("Empty:", queue.Empty()) // 输出: Empty: false
+	fmt.Println("Pop:", queue.Pop())   // 输出: Pop: 2
+	fmt.Println("Empty:", queue.Empty()) // 输出: Empty: true
+}
+
+~~~
 
 ## 三、设计类问题
 
