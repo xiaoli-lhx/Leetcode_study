@@ -292,6 +292,183 @@ func fourSum(nums []int, target int) [][]int {
 
 滑动窗口是双指针的一种特例，用于解决子数组/子串问题。两个指针维护一个“窗口”，根据条件移动右指针扩大窗口，移动左指针缩小窗口。
 
+#### 76.[最小覆盖字串](https://leetcode.cn/problems/minimum-window-substring/)
+
+##### **思路**:滑动窗口（欠债与还债模型）
+
+可以把这个问题想象成一个“还债”的过程：
+
+1. 字符串 `t` 是我们的**“债务清单”(`need` map)**，记录了我们需要“偿还”哪些字符，以及各需要多少个。
+2. 我们在字符串 `s` 上移动的**窗口 (`window` map)**，就是我们用来“还债”的资产。
+3. 算法的目标是，找到能**刚好还清所有债务**的**最小**的一段连续资产。
+
+###### 关键变量
+
+- `need` 哈希表：债务清单，记录 `t` 中各字符的数量。
+- `window` 哈希表：记录当前窗口内，相关字符的数量。
+- `left`, `right` 指针：构成滑动窗口的左右边界。
+- `match` 计数器：记录**已还清**的字符种类数。
+
+###### 算法流程：两阶段循环
+
+整个过程就是 `right` 指针不断右移，而 `left` 指针在满足条件时右移。
+
+**第一阶段：扩大窗口，努力“还债”**
+
+- `right` 指针向右移动，把新字符纳入 `window`。
+- 如果新纳入的字符是 `need` 中的一员：
+  - `window` 中对应字符数+1。
+  - 如果 `window` 中该字符的数量**恰好等于** `need` 中的数量，说明该种字符的“债务”刚好还清，`match` 计数器+1。
+
+**第二阶段：收缩窗口，寻求“最优”**
+
+- 一旦 `match` 的值等于 `need` 中不同字符的总数，说明**所有债务都已还清**，找到了一个可行的解。
+- 此时，我们尝试**收缩窗口**：
+  - `left` 指针向右移动，将字符移出 `window`。
+  - 如果移出的字符是 `need` 中的一员：
+    - 如果它在 `window` 中的数量**从“刚好还清”变为“又欠下了”**，那么 `match` 计数器-1。
+    - `window` 中对应字符数-1。
+  - 在每次成功收缩时（即 `left` 右移前），都记录并更新一次“最小覆盖子串”的长度和位置。
+  - 当 `match` 值不再满足条件时，停止收缩，回到第一阶段，继续移动 `right` 寻找下一个还清债务的时刻。
+
+**总结**：整个算法就是 `right` 指针一路向东探索，`left` 指针则在窗口满足条件时，尽力向右收缩以找到最短的距离
+
+~~~Go
+func minWindow(s string, t string) string {
+	if len(s) < len(t) {
+		return ""
+	}
+	
+	// need 记录了 t 中每个字符需要的数量
+	need := make(map[byte]int)
+	// window 记录了当前窗口中每个字符的数量
+	window := make(map[byte]int)
+
+	for i := 0; i < len(t); i++ {
+		need[t[i]]++
+	}
+
+	left, right := 0, 0
+	// match 记录了窗口中满足 need 条件的字符种类数
+	match := 0
+	// minLen 记录了最小子串的长度，初始化为一个不可能的大值
+	minLen := len(s) + 1
+	// start 记录了最小子串的起始位置
+	start := 0
+
+	for right < len(s) {
+		// c1 是即将移入窗口的字符
+		c1 := s[right]
+		right++ // 扩大窗口
+
+		// --- 更新窗口和匹配状态 ---
+		if _, ok := need[c1]; ok {
+			window[c1]++
+			if window[c1] == need[c1] {
+				// 这种字符的数量已经满足要求了
+				match++
+			}
+		}
+
+		// --- 当所有字符都满足要求时，开始收缩窗口 ---
+		for match == len(need) {
+			// 找到了一个有效的覆盖子串，更新最小长度
+			if right-left < minLen {
+				minLen = right - left
+				start = left
+			}
+
+			// c2 是即将移出窗口的字符
+			c2 := s[left]
+			left++ // 收缩窗口
+
+			// --- 更新窗口和匹配状态 ---
+			if _, ok := need[c2]; ok {
+				if window[c2] == need[c2] {
+					// 移出 c2 后，这种字符的数量将不再满足要求
+					match--
+				}
+				window[c2]--
+			}
+		}
+	}
+
+	// 如果 minLen 没有被更新过，说明没有找到有效的子串
+	if minLen == len(s)+1 {
+		return ""
+	}
+	
+	return s[start : start+minLen]
+}
+
+~~~
+
+
+
+#### 3. [无重复字符的最长字串](https://leetcode.cn/problems/longest-substring-without-repeating-characters/description/)
+
+**思路**:滑动窗口 + 哈希表
+
+想象有一个**可伸缩的窗口**在字符串上从左向右滑动。这个窗口始终努力保持内部没有重复字符，并在这个过程中记录下它所能达到的最大宽度。
+
+具体步骤：
+
+1. **定义窗口**：用 `left` 和 `right` 两个指针作为窗口的左右边界。`right` 负责向右探索，`left` 在必要时向右收缩。
+
+2. **定义“记事本”**：使用一个哈希表（`map`）作为记事本，记录每个字符**最近一次出现的位置**。
+
+3. **滑动过程**：
+
+   - `right` 指针不断向右移动，考察新字符。
+
+   - **遇到新字符时，问记事本**：这个字符上次出现过吗？
+
+     - **如果出现过，且在当前窗口内**：说明窗口内有了重复。必须收缩窗口。将 `left` 指针直接“跳”到**重复字符上次出现位置的下一位**。
+
+     - **如果不重复**：窗口可以安全地向右扩大。`left` 指针不动。
+
+   - 每移动一步 `right`，都计算一下当前窗口的长度 (`right - left + 1`)，并更新记录到的最大长度。
+
+   - **更新记事本**：在每一步结束时，都要在记事本上更新当前字符的最新位置。
+
+总结
+
+这个方法就像一个“健忘”的检查员，他只关心当前窗口内的字符是否重复。一旦发现重复，他就把窗口的起点移到旧字符之后，假装“忘记”了旧字符以及它之前的所有内容，然后继续检查。通过这种方式，我们用一次遍历就解决了问题，效率非常高。
+
+~~~go
+func lengthOfLongestSubstring(s string) int {
+	// lastSeen 哈希表：key 是字符，value 是该字符最近一次出现的索引
+	lastSeen := make(map[rune]int)
+	maxLength := 0
+	// left 是滑动窗口的左边界
+	left := 0
+
+	// right 是滑动窗口的右边界
+	for right, char := range s {
+		// 检查当前字符 char 是否在哈希表中，并且其上次出现的位置是否在当前窗口内
+		if lastIndex, found := lastSeen[char]; found && lastIndex >= left {
+			// 如果是，说明遇到了重复字符。
+			// 我们需要收缩窗口，将左边界移动到重复字符上次出现位置的下一个位置。
+			left = lastIndex + 1
+		}
+
+		// 计算当前窗口的长度
+		currentLength := right - left + 1
+		// 更新最大长度
+		if currentLength > maxLength {
+			maxLength = currentLength
+		}
+
+		// 无论如何，都要更新当前字符的最新位置
+		lastSeen[char] = right
+	}
+
+	return maxLength
+}
+~~~
+
+
+
 #### [209. 长度最小的子数组](https://leetcode.cn/problems/minimum-size-subarray-sum/description/)
 
 **思路:** 使用滑动窗口。用 `right` 指针扩大窗口，当窗口内元素和 `sum >= target` 时，记录长度并收缩 `left` 指针，直到 `sum < target`，然后继续扩大窗口。
@@ -430,6 +607,44 @@ func maxSubArray(nums []int) int {
 ## 二、基础数据结构
 
 ### 1. 数组 (Array)
+
+#### 238.[除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
+
+**思路**：前缀积与后缀积
+
+既然不能用除法，我们就不能先计算总乘积再逐个除去。正确的思路是，对于每一个位置 `i`，它最终的结果其实是**它左边所有元素的乘积** 乘以 **它右边所有元素的乘积**。
+
+~~~go
+func productExceptSelf(nums []int) []int {
+	n := len(nums)
+	// 初始化结果数组
+	answer := make([]int, n)
+
+	// --- 第一次遍历：计算前缀积 ---
+	// answer[i] 先用来存储 nums[i] 左侧所有元素的乘积
+	// 对于第一个元素，其左侧没有元素，我们认为乘积为 1
+	answer[0] = 1
+	for i := 1; i < n; i++ {
+		// i 的前缀积 = (i-1 的前缀积) * nums[i-1]
+		answer[i] = answer[i-1] * nums[i-1]
+	}
+
+	// --- 第二次遍历：计算后缀积并得出最终结果 ---
+	// 我们需要一个变量来从右到左地累计后缀积
+	// 对于最后一个元素，其右侧没有元素，初始后缀积为 1
+	suffixProduct := 1
+	for i := n - 1; i >= 0; i-- {
+		// 对于位置 i，最终结果 = (之前算好的前缀积) * (当前的后缀积)
+		answer[i] = answer[i] * suffixProduct
+		// 更新后缀积，为下一个位置（左边一个）做准备
+		suffixProduct = suffixProduct * nums[i]
+	}
+
+	return answer
+}
+~~~
+
+
 
 #### [66. 加一](https://leetcode.cn/problems/plus-one/description/)
 
@@ -807,6 +1022,51 @@ func strStr(haystack string, needle string) int {
 ```
 
 ### 4. 哈希表 (Hash Table)
+
+#### 560.  [和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
+
+**思路**：前缀和＋哈希表，**当前前缀和 - 起始前缀和 = k --> 当前前缀和 - k = 起始前缀和**
+
+>比如，对于数组 `nums = [3, 4, 7, 2]`：
+>
+>- 到第一个数 `3` 的前缀和是 `3`。
+>- 到第二个数 `4` 的前缀和是 `3 + 4 = 7`。
+>- 到第三个数 `7` 的前缀和是 `7 + 7 = 14`。
+>- 到第四个数 `2` 的前缀和是 `14 + 2 = 16`。
+>
+>这个“累计尺”最大的用处，就是能立刻算出**任意一段**的和。比如，我们要算子数组 `[4, 7]` 的和（也就是从第2个到第3个数）。我们可以用第3个位置的前缀和 (14) 减去 **它开始位置之前** 的前缀和 (3)，得到 `14 - 3 = 11`。这和 `4 + 7` 的结果是一样的！
+
+当我们在数组中一路计算“当前前缀和”（也就是公式里的“终点的前缀和”）时，我们只需要回头看看，**我们以前见没见过一个前缀和，它的值恰好是“当前前缀和 - k”**。
+
+如果见过，那么从那个“见过的位置”到我们“当前的位置”，中间夹着的子数组的和就一定是 `k`！
+
+**现在问题来了：** 当我们遍历数组时，如何能快速地知道“某个值的前缀和”我们以前见没见过，以及见过几次呢？
+
+这就是**哈希表 (Map)** 登场的时候了。我们可以用一个哈希表，在遍历的时候不断记录：
+
+- **键 (Key)**: 某个前缀和的值。
+- **值 (Value)**: 这个值到目前为止出现过几次。
+
+这样，每当我们算出一个新的“当前前缀和”，我们就可以去哈希表里快速查询 `当前前缀和 - k` 是不是存在，从而瞬间知道有多少个满足条件的子数组。
+
+~~~go
+func subarraySum(nums []int, k int) int {
+	count := 0
+	sum := 0
+	m := make(map[int]int)
+	m[0] = 1
+	for _, num := range nums {
+		sum += num
+		if _, ok := m[sum-k]; ok {
+			count++
+		}
+		m[sum]++
+	}
+	return count
+}
+~~~
+
+
 
 #### [1. 两数之和](https://leetcode.cn/problems/two-sum/)
 
