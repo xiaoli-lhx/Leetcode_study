@@ -1238,6 +1238,234 @@ func canConstruct(ransomNote string, magazine string) bool {
 
 ### 5. 栈与队列(Stack and Queue)
 
+#### 1047.[删除字符串中所有的相邻重复项](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string/)
+
+**思路：**
+
+创建一个空栈。
+
+从左到右遍历字符串中的每一个字符：
+
+- 首先，检查栈是否为空。
+  - 如果栈是空的（比如处理第一个字符时），直接将当前字符**入栈**。
+  - 如果栈不是空的，就查看一下栈顶的元素。
+- 将当前字符与栈顶元素进行比较：
+  - 如果它们**相同**，就将栈顶元素**出栈**（实现“消除”效果）。
+  - 如果它们**不同**，就将当前字符**入栈**。
+
+遍历完整个字符串后，栈里剩下的字符，就是最终“消除”后留下的结果。我们只需要把它们从栈底到栈顶依次拼接起来即可。
+
+**用list模拟栈**：
+
+~~~go
+func removeDuplicates(s string) string {
+	stack := list.New()
+	stack.PushBack(s[0])
+	for i := 1; i < len(s); i++ {
+		if stack.Len()!=0 && s[i] == stack.Back().Value {
+			stack.Remove(stack.Back())
+		} else {
+			stack.PushBack(s[i])
+		}
+	}
+	var result []byte
+	for e := stack.Front(); e!= nil; e = e.Next() {
+		result = append(result,e.Value.(byte))
+	}
+	return  string(result)
+}
+~~~
+
+**用切片模拟栈**：
+
+~~~go
+func removeDuplicates(s string) string {
+    var stack = []byte{}
+    for i:=0;i<len(s);i++{
+        if len(stack) > 0 && s[i] == stack[len(stack)-1]{
+            stack = stack[:len(stack)-1]
+        }else{
+            stack = append(stack,s[i])
+        }
+    }
+    return string(stack)
+}
+~~~
+
+最好使用**切片**模拟，原因详见 [Go语言中栈的实现：Slice还是List？](https://xiaoli-lhx.github.io/go%E8%AF%AD%E8%A8%80/go%E5%9F%BA%E7%A1%80/go%E8%AF%AD%E8%A8%80%E6%A8%A1%E6%8B%9F%E6%A0%88/)
+
+#### 20.[有效的括号](https://leetcode.cn/problems/valid-parentheses/description/)
+
+**思路**：
+
+创建一个空栈。
+
+从左到右遍历字符串中的每一个字符：
+
+- 如果字符是**左括号** (`(`, `{`, `[`)，就把它**推入栈**中。 .
+- 如果字符是**右括号** (`)`, `}`, `]`)：
+  - 检查栈是否为空。如果为空，说明这个右括号没有对应的左括号，字符串**无效**。
+  - 如果不为空，就从栈顶**弹出一个元素**。检查这个弹出的左括号是否和当前的右括号匹配。如果不匹配，字符串**无效**。
+
+遍历完整个字符串后，检查栈是否为空。如果不为空，说明有剩下的左括号，字符串**无效**。
+
+如果以上所有检查都通过了，那么字符串就是**有效**的。
+
+~~~go
+func isValid(s string) bool {
+	paris := map[rune]rune{
+		')': '(',
+		'}': '{',
+		']': '[',
+	}
+	list := list.New()
+	for _, ch := range s {
+		if ch == '(' || ch == '{' || ch == '[' {
+			// push
+			list.PushBack(ch)
+		}
+		if ch == ')' || ch == '}' || ch == ']' {
+			if list.Len() == 0 {
+				return false
+			} else {
+				// pop
+				old := list.Back()
+				list.Remove(old)
+				if old.Value != paris[ch] {
+					return false
+				}
+			}
+		}
+	}
+	if list.Len() != 0 {
+		return false
+	}
+	return true
+}
+~~~
+
+
+
+#### 225.[用队列实现栈](https://leetcode.cn/problems/implement-stack-using-queues/description/)
+
+方法一：Push简单，Pop复杂 (懒惰入栈)
+
+- **思路**:
+  - `Push` 操作时，新元素直接加入队尾。
+  - `Pop` 操作时，为了拿到“最后”一个入队的元素，需要把队列中排在它前面的所有元素，都从队头取出，再重新放回队尾。这样操作后，原先的“最后一个”元素就跑到了队头，可以轻松取出。
+- **操作**:
+  - **入栈 (Push)**: 直接在队尾添加元素。
+  - **出栈 (Pop)**: 将 `n-1` 个队头元素依次挪到队尾，然后取出此时的队头元素。
+
+~~~go
+package main
+
+import "container/list"
+
+type MyStack struct {
+	queue *list.List
+}
+
+func Constructor() MyStack {
+	return MyStack{
+		queue: list.New(),
+	}
+}
+
+func (this *MyStack) Push(x int) {
+	this.queue.PushBack(x)
+}
+
+func (this *MyStack) Pop() int {
+	n := this.queue.Len()
+	for i := 0; i < n-1; i++ {
+		n := this.queue.Front().Value.(int)
+		this.queue.Remove(this.queue.Front())
+		this.Push(n)
+	}
+	x := this.queue.Front().Value.(int)
+	this.queue.Remove(this.queue.Front())
+	return x
+}
+
+func (this *MyStack) Top() int {
+	x := this.Pop()
+	this.Push(x)
+	return x
+}
+
+func (this *MyStack) Empty() bool {
+	return this.queue.Len() == 0
+}
+
+/**
+ * Your MyStack object will be instantiated and called as such:
+ * obj := Constructor();
+ * obj.Push(x);
+ * param_2 := obj.Pop();
+ * param_3 := obj.Top();
+ * param_4 := obj.Empty();
+ */
+
+~~~
+
+---
+
+方法二：Push复杂，Pop简单 (积极入栈)
+
+- **思路**:
+  - 每次 `Push` 一个新元素后，不让它“默默”待在队尾，而是立刻通过一系列操作，把它移动到队头。
+  - 这样可以保证队列的头部永远是“最新”的元素，也就是栈顶元素。
+- **操作**:
+  - **入栈 (Push)**: 新元素先正常加入队尾，然后立刻将它移动到队头。
+  - **出栈 (Pop)**: 直接取出队头元素即可。
+  - **查看栈顶 (Top)**: 直接查看队头元素即可。
+
+~~~go
+type MyStack struct {
+    queue *list.List
+}
+
+
+func Constructor() MyStack {
+    return MyStack{
+        queue: list.New(),
+    }
+}
+
+func (this *MyStack) Push(x int)  {
+    i:=this.queue.PushBack(x)
+    this.queue.MoveToFront(i)
+}
+
+
+func (this *MyStack) Pop() int {
+    front:=this.queue.Front()
+    this.queue.Remove(front)
+    return front.Value.(int)
+}
+
+
+func (this *MyStack) Top() int {
+    return this.queue.Front().Value.(int)
+}
+
+
+func (this *MyStack) Empty() bool {
+    return this.queue.Len()==0
+}
+
+
+/**
+ * Your MyStack object will be instantiated and called as such:
+ * obj := Constructor();
+ * obj.Push(x);
+ * param_2 := obj.Pop();
+ * param_3 := obj.Top();
+ * param_4 := obj.Empty();
+ */
+~~~
+
 #### 232. [用栈实现队列](https://leetcode.cn/problems/implement-queue-using-stacks/description/)
 
 **思路**:利用两个栈，一个作为新元素的入口缓冲 (`inStack`)，另一个作为老元素的出口 (`outStack`)。通过在 `outStack` 为空时，将 `inStack` 的元素全部转移到 `outStack` 的方式，完成一次顺序的逆转，从而用 LIFO 的栈模拟出了 FIFO 的队列行为。
