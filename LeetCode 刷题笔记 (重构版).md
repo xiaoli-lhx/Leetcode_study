@@ -1238,6 +1238,70 @@ func canConstruct(ransomNote string, magazine string) bool {
 
 ### 5. 栈与队列(Stack and Queue)
 
+#### 150.[逆波兰表达式求值](https://leetcode.cn/problems/evaluate-reverse-polish-notation/description/)
+
+**思路**：
+
+创建一个空栈（在Go里可以用切片实现）。
+
+从左到右遍历表达式中的每一个元素（字符串）：
+
+- 如果这个元素是一个**数字**，就把它转换成整型，然后**入栈**。
+- 如果这个元素是一个**运算符** (`+`, `-`, `*`, `/`)：
+  - 先从栈顶**出栈**一个数（比如 `num1`）。
+  - 再从栈顶**出栈**第二个数（比如 `num2`）。
+  - 执行 `num2 [运算符] num1` 的计算。
+  - 把计算结果**入栈**。
+
+遍历结束后，栈里会只剩下一个数字，它就是最终的答案。
+
+~~~go
+package main
+
+import "strconv"
+
+func evalRPN(tokens []string) int {
+	// 我们的栈，用来存放整数
+	stack := []int{}
+
+	// 遍历每一个字符串 token
+	for _, token := range tokens {
+		// 尝试把 token 转换成数字
+		num, err := strconv.Atoi(token)
+
+		// 如果转换成功 (err == nil)，说明是数字
+		if err == nil {
+			// 数字直接入栈
+			stack = append(stack, num)
+		} else { // 如果转换失败，说明是运算符
+			// 从栈顶弹出两个数字
+			num1 := stack[len(stack)-1]
+			num2 := stack[len(stack)-2]
+			// 先把弹出的两个数从栈里移除
+			stack = stack[:len(stack)-2]
+
+			// 根据 token (运算符) 进行计算
+			switch token {
+			case "+":
+				stack = append(stack, num2+num1)
+			case "-":
+				stack = append(stack, num2-num1)
+			case "*":
+				stack = append(stack, num2*num1)
+			case "/":
+				stack = append(stack, num2/num1)
+			}
+		}
+	}
+
+	// 循环结束后，栈里剩下的唯一一个数就是答案
+	return stack[0]
+}
+
+~~~
+
+
+
 #### 1047.[删除字符串中所有的相邻重复项](https://leetcode.cn/problems/remove-all-adjacent-duplicates-in-string/)
 
 **思路：**
