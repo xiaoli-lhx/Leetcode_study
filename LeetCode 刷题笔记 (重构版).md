@@ -8,7 +8,7 @@
 
 ## 一、核心算法思想
 
-### 1. 双指针 (Two Pointers)
+### 双指针 (Two Pointers)
 
 双指针是一种通过维护两个指针在序列中同向或相向移动，来降低时间复杂度的技巧。
 
@@ -288,7 +288,7 @@ func fourSum(nums []int, target int) [][]int {
 }
 ```
 
-### 2. 滑动窗口 (Sliding Window)
+### 滑动窗口 (Sliding Window)
 
 滑动窗口是双指针的一种特例，用于解决子数组/子串问题。两个指针维护一个“窗口”，根据条件移动右指针扩大窗口，移动左指针缩小窗口。
 
@@ -495,7 +495,7 @@ func minSubArrayLen(target int, nums []int) int {
 }
 ```
 
-### 3. 二分查找 (Binary Search)
+### 二分查找 (Binary Search)
 
 适用于**有序**序列的查找，每次将搜索范围缩小一半，时间复杂度为 O(log n)。
 
@@ -519,7 +519,7 @@ func search(nums []int, target int) int {
 }
 ```
 
-### 4. 贪心算法 (Greedy Algorithm)
+### 贪心算法 (Greedy Algorithm)
 
 **核心思想:** 贪心的本质是选择每一阶段的局部最优，从而达到全局最优。
 
@@ -606,7 +606,7 @@ func maxSubArray(nums []int) int {
 
 ## 二、基础数据结构
 
-### 1. 数组 (Array)
+### 数组 (Array)
 
 #### 238.[除自身以外数组的乘积](https://leetcode.cn/problems/product-of-array-except-self/)
 
@@ -741,7 +741,7 @@ func generateMatrix(n int) [][]int {
 }
 ```
 
-### 2. 链表 (Linked List)
+### 链表 (Linked List)
 
 #### [707. 设计链表](https://leetcode.cn/problems/design-linked-list/description/)
 
@@ -947,7 +947,7 @@ func detectCycle(head *ListNode) *ListNode {
 }
 ```
 
-### 3. 字符串 (String)
+### 字符串 (String)
 
 #### [344. 反转字符串](https://leetcode.cn/problems/reverse-string/description/)
 
@@ -1021,7 +1021,7 @@ func strStr(haystack string, needle string) int {
 }
 ```
 
-### 4. 哈希表 (Hash Table)
+### 哈希表 (Hash Table)
 
 #### 560.  [和为K的子数组](https://leetcode.cn/problems/subarray-sum-equals-k/)
 
@@ -1236,7 +1236,142 @@ func canConstruct(ransomNote string, magazine string) bool {
 }
 ```
 
-### 5. 栈与队列(Stack and Queue)
+### 栈与队列(Stack and Queue)
+
+#### 347.[前k个高频元素](https://leetcode.cn/problems/top-k-frequent-elements/)
+
+**思路**: 详见[Go语言解[前k个高频元素]：从排序到堆的深度探索](https://xiaoli-lhx.github.io/go%E8%AF%AD%E8%A8%80/go%E5%9F%BA%E7%A1%80/go%E8%AF%AD%E8%A8%80%E5%A0%86/)
+
+~~~go
+package main
+
+import (
+	"container/heap"
+	"sort"
+)
+
+type Pair struct {
+	Number int
+	Count  int
+}
+
+type IHeap []Pair
+
+func (h IHeap) Len() int           { return len(h) }
+func (h IHeap) Less(i, j int) bool { return h[i].Count < h[j].Count }
+func (h IHeap) Swap(i, j int)      { h[i], h[j] = h[j], h[i] }
+func (h *IHeap) Push(x interface{}) {
+	*h = append(*h, x.(Pair))
+}
+func (h *IHeap) Pop() interface{} {
+	old := *h
+	n := len(old)
+	x := old[n-1]
+	*h = old[0 : n-1]
+	return x
+}
+
+func topKFrequent(nums []int, k int) []int {
+	// 1. 统计频率
+	freqMap := make(map[int]int)
+	for _, num := range nums {
+		freqMap[num]++
+	}
+
+	// 2. 创建一个最小堆
+	minHeap := &IHeap{}
+	heap.Init(minHeap) // 初始化堆
+
+	// 3. 遍历频率，维护一个大小为 k 的最小堆
+	for num, count := range freqMap {
+		heap.Push(minHeap, Pair{Number: num, Count: count})
+		if minHeap.Len() > k {
+			heap.Pop(minHeap) // 如果堆大小超过 k，就把最小的那个（堆顶）扔掉
+		}
+	}
+
+	// 4. 堆里剩下的就是前 k 个高频元素，收集结果
+	var result []int
+	for minHeap.Len() > 0 {
+		// Pop 的结果是 Pair 类型，我们需要它的 Number 字段
+		result = append(result, heap.Pop(minHeap).(Pair).Number)
+	}
+	return result
+}
+
+// 另一种实现方式，使用 sort.Slice 进行自定义降序排序
+func topKFrequent_Sort(nums []int, k int) []int {
+	// 1. 统计频率
+	freqMap := make(map[int]int)
+	for _, num := range nums {
+		freqMap[num]++
+	}
+
+	// 2. 将 map 转换为 struct 切片
+	type Pair struct {
+		Number int
+		Count  int
+	}
+	var pairs []Pair
+	for num, count := range freqMap {
+		pairs = append(pairs, Pair{Number: num, Count: count})
+	}
+
+	// 3. 使用 sort.Slice 进行自定义降序排序
+	sort.Slice(pairs, func(i, j int) bool {
+		return pairs[i].Count > pairs[j].Count
+	})
+
+	// 4. 取出前 k 个元素
+	var result []int
+	for i := 0; i < k; i++ {
+		result = append(result, pairs[i].Number)
+	}
+	return result
+}
+
+~~~
+
+#### 239.[滑动窗口最大值](https://leetcode.cn/problems/sliding-window-maximum/)
+
+**思路**：核心思路是**避免重复计算**。我们不关心窗口里的所有元素，只关心那些“有潜力”成为最大值的“候选人”。
+
+我们用一个特殊的数据结构——**单调队列**（用双端队列或切片实现）来维护这些候选人，并遵循以下三条规则：
+
+1. **维护单调性**：当一个新元素准备入队时，我们从**队尾**把所有比它小的旧元素都“挤”出去，再让新元素入队。这样保证队列从头到尾是单调递减的。
+2. **获取最大值**：因为队列是单调递减的，所以**队头永远是当前窗口的最大值**。
+3. **处理过期元素**：当窗口滑动时，我们需要检查队头的元素是否已经“滑出”了窗口范围，如果是，就把它从**队头**移除。
+
+通过这三步，我们在每次窗口滑动时，都能以近乎 O(1) 的时间找到最大值，最终总时间复杂度降到了 O(N)。
+
+~~~go
+func maxSlidingWindow(nums []int, k int) []int {
+	// 1. 准备工作
+	// 用一个切片来做双端队列，存放索引
+	deque := []int{}
+	result := []int{}
+	// 2. 遍历数组
+	for i := 0; i < len(nums); i++ {
+		// -清理队尾
+		for len(deque) > 0 && nums[deque[len(deque)-1]] <= nums[i] {
+			deque = deque[:len(deque)-1]
+		}
+		// -加入队尾
+		deque = append(deque, i)
+		// -清理队头
+		if deque[0] <= i-k {
+			deque = deque[1:]
+		}
+		// -加入结果
+		if i >= k-1 {
+			result = append(result, nums[deque[0]])
+		}
+	}
+	return result
+}
+~~~
+
+
 
 #### 150.[逆波兰表达式求值](https://leetcode.cn/problems/evaluate-reverse-polish-notation/description/)
 
@@ -1620,9 +1755,137 @@ func main() {
 
 ~~~
 
+### 二叉树(Binary tree)
+
+#### 1. 二叉树的递归遍历
+
+> 1. 确定递归函数的参数和返回值
+> 2. 确定递归函数的终止条件
+> 3. 确定单层递归的逻辑
+
+##### 144.[二叉树的前序遍历](https://leetcode.cn/problems/binary-tree-preorder-traversal/description/)
+
+~~~go
+func preorderTraversal(root *TreeNode) []int {
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		// 终止条件
+		if node == nil {
+			return
+		}
+		// 先序遍历
+		res = append(res, node.Val)
+		// 左子树
+		traversal(node.Left)
+		// 右子树
+		traversal(node.Right)
+	}
+	traversal(root)
+	return res
+}
+~~~
+
+##### 145.[二叉树的后序遍历](https://leetcode.cn/problems/binary-tree-postorder-traversal/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func postorderTraversal(root *TreeNode) []int {
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		// 终止条件
+		if node == nil {
+			return
+		}
+		// 后续遍历
+		traversal(node.Left)
+		traversal(node.Right)
+		// 记录结果
+		res = append(res, node.Val)
+	}
+	traversal(root)
+	return res
+}
+~~~
+
+##### 94.[二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func inorderTraversal(root *TreeNode) []int {
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		// 终止条件
+		if node == nil {
+			return
+		}
+		// 中序遍历
+		traversal(node.Left)
+		res = append(res, node.Val)
+		traversal(node.Right)
+	}
+	traversal(root)
+	return res
+}
+~~~
+
+#### 2. 二叉树的迭代遍历
+
+144.[二叉树的前序遍历](https://leetcode.cn/problems/binary-tree-preorder-traversal/description/)
+
+**思路：**
+
+我们把这个过程想象成一个“**待办事项**”列表（这个列表就是我们的栈）。
+
+1. **开始工作**：我们接到的第一个任务就是处理根节点。所以，我们先把**根节点**放入“待办事项”列表（入栈）。
+2. **处理当前任务**：我们从列表里拿出任务来做。
+   - 现在唯一的任务是根节点，我们把它拿出来（出栈）。
+   - 按照前序遍历“**根** -> 左 -> 右”的顺序，我们**立刻**处理它，把它的值记录到结果里。“根”的部分就完成了。
+3. **添加新任务**：处理完根节点后，它告诉我们接下来还有两个新任务：处理它的左子树和右子树。
+   - 我们的“待办事项”列表是后进先出的。为了保证我们**先**做“处理左子树”这个任务，我们必须把它**后**放入列表。
+   - 所以，我们先把**右子节点**放入待办列表（入栈），再把**左子节点**放入待办列表（入栈）。
+
+你看，我们并不是一次性地把“右左中”都放进去。而是“**先放中 -> 取出中并处理 -> 再放右 -> 最后放左**”。
+
+这样一来，下一个从栈顶被取出来的，自然就是我们后放进去的左子节点了，完美实现了“根 -> 左 -> 右”的顺序。
+
+~~~go
+func preorderTraversal(root *TreeNode) []int {
+	var res []int
+	stack := []*TreeNode{root}
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if node == nil {
+			continue
+		}
+		res = append(res, node.Val)
+		stack = append(stack, node.Right)
+		stack = append(stack, node.Left)
+	}
+	return res
+}
+~~~
+
 ## 三、设计类问题
 
-### 1. `LRU` 缓存
+### `LRU` 缓存
 
 #### [146. `LRU` 缓存](https://leetcode.cn/problems/lru-cache/description/)
 
@@ -1672,7 +1935,7 @@ func (this *LRUCache) Put(key, value int) {
 }
 ```
 
-### 2. `LFU `缓存
+### `LFU `缓存
 
 #### [460. `LFU` 缓存](https://leetcode.cn/problems/lfu-cache/description/)
 
