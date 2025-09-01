@@ -1847,7 +1847,7 @@ func inorderTraversal(root *TreeNode) []int {
 
 #### 2. 二叉树的迭代遍历
 
-144.[二叉树的前序遍历](https://leetcode.cn/problems/binary-tree-preorder-traversal/description/)
+##### 144.[二叉树的前序遍历](https://leetcode.cn/problems/binary-tree-preorder-traversal/description/)
 
 **思路：**
 
@@ -1882,6 +1882,76 @@ func preorderTraversal(root *TreeNode) []int {
 	return res
 }
 ~~~
+
+##### 145.[二叉树的后序遍历](https://leetcode.cn/problems/binary-tree-postorder-traversal/)
+
+**思路：**
+
+先序遍历的入栈是入根，出根，入右，入左，出左，出右，从而保证了出栈顺序是根左右
+
+后序遍历出栈顺序应该是左右根，为了保证出栈顺序的正确，我们调整一下先序遍历的入栈顺序，变成入根，出根，入左，入右，出右，出左，从而保证了出栈顺序是根右左，再将结果反转，即为左右根
+
+~~~go
+func postorderTraversal(root *TreeNode) []int {
+	var res []int
+	stack := []*TreeNode{root}
+	for len(stack) > 0 {
+		node := stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		if node == nil {
+			continue
+		}
+		res = append(res, node.Val)
+		stack = append(stack, node.Left)
+		stack = append(stack, node.Right)
+	}
+	reverse(res)
+	return res
+}
+func reverse(arr []int) {
+	l, r := 0, len(arr)-1
+	for l < r {
+		arr[l], arr[r] = arr[r], arr[l]
+		l++
+		r--
+	}
+}
+
+~~~
+
+##### 94.[二叉树的中序遍历](https://leetcode.cn/problems/binary-tree-inorder-traversal/)
+
+**思路：**
+
+中序遍历迭代法的三个核心步骤都想出来了：
+
+1. **一路向左**：从一个节点出发，不断访问它的左子节点，并把路径上所有节点都推入栈中，直到左边走到底。
+2. **处理节点**：当左边走到底时，从栈里弹出一个节点并记录它的值。
+3. **转向右侧**：然后，把这个弹出的节点作为“根”，转向它的右子树，对右子树**重复以上所有过程**。
+
+这个循环会一直进行，直到栈和当前节点都为空，说明整棵树都处理完了。
+
+~~~go
+// 迭代法
+func inorderTraversal(root *TreeNode) []int {
+	var res []int
+	var stack []*TreeNode
+	node := root
+	for node != nil || len(stack) > 0 {
+		for node != nil {
+			stack = append(stack, node)
+			node = node.Left
+		}
+		node = stack[len(stack)-1]
+		stack = stack[:len(stack)-1]
+		res = append(res, node.Val)
+		node = node.Right
+	}
+	return res
+}
+~~~
+
+
 
 ## 三、设计类问题
 
