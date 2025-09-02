@@ -1951,6 +1951,157 @@ func inorderTraversal(root *TreeNode) []int {
 }
 ~~~
 
+#### 3. 二叉树的层序遍历
+
+1. 创建一个空队列，和一个用于存放最终结果的二维列表 `results`。
+
+2. 如果根节点不为空，就将根节点入队。
+
+3. 开始一个**外层循环**，条件是“队列不为空”：
+
+   a. 首先，获取当前队列的长度，我们叫它 `levelSize`。这代表了当前层有多少个节点。
+
+   b. 创建一个用于存放当前层节点值的临时列表 `currentLevel`。
+
+   c. 开始一个**内层循环**，**重复 `levelSize` 次**：
+
+   ​	i. 从队列头部**出队**一个节点。 
+
+   ​	ii. 将该节点的值存入 `currentLevel`。 
+
+   ​	iii. **先**将该节点的**左**子节点（如果不为空）入队。 
+
+   ​	iv. **再**将该节点的**右**子节点（如果不为空）入队。
+
+   d.内层循环结束后，把 `currentLevel` 加入到最终结果 `results` 中。
+
+4. 外层循环结束后，返回 `results`。
+
+##### 102.[二叉树的层序遍历](https://leetcode.cn/problems/binary-tree-level-order-traversal/description/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func levelOrder(root *TreeNode) [][]int {
+	if root == nil {
+		return nil
+	}
+	queue := []*TreeNode{root}
+	result := [][]int{}
+	for len(queue) > 0 {
+		levelSize := len(queue)
+		currentLevel := make([]int, levelSize)
+		for i := 0; i < levelSize; i++ {
+			node := queue[0]
+			currentLevel[i] = node.Val
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+		}
+		result = append(result, currentLevel)
+	}
+	return result
+}
+~~~
+
+##### 107.[二叉树的层序遍历II](https://leetcode.cn/problems/binary-tree-level-order-traversal-ii/)
+
+**思路：**
+
+将层序遍历的结果翻转一下就是答案
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func levelOrderBottom(root *TreeNode) [][]int {
+	if root==nil{
+		return nil
+	}
+	result := [][]int{}
+	queue := []*TreeNode{root}
+	for len(queue)>0{
+		levelSize := len(queue)
+		currentLevel := make([]int, levelSize)
+		for i := 0; i < levelSize; i++ {
+			node := queue[0]
+			currentLevel[i] = node.Val
+			queue = queue[1:]
+			if node.Left!= nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right!= nil {
+				queue = append(queue, node.Right)
+			}
+		}
+		result = append(result,currentLevel)
+	}
+	l,r:=0,len(result)-1
+	for l<r{
+		result[l],result[r] = result[r], result[l]
+		l++
+		r--
+	}
+	return result
+}
+~~~
+
+##### 199.[二叉树的右视图](https://leetcode.cn/problems/binary-tree-right-side-view/)
+
+**思路：**层序遍历，取每层最后一个节点的值
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+// 层序遍历，取每层最后一个节点的值
+func rightSideView(root *TreeNode) []int {
+	if root == nil {
+		return nil
+	}
+	var res []int
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		size := len(queue)
+		for i := 0; i < size; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if i == size-1 {
+				res = append(res, node.Val)
+			}
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+		}
+	}
+	return res
+}
+
+~~~
+
 
 
 ## 三、设计类问题
