@@ -2102,6 +2102,196 @@ func rightSideView(root *TreeNode) []int {
 
 ~~~
 
+##### 637.[二叉树的层平均值](https://leetcode.cn/problems/average-of-levels-in-binary-tree/description/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func averageOfLevels(root *TreeNode) []float64 {
+	var ans []float64
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		size := len(queue)
+		sum := 0
+		for i := 0; i < size; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			sum += node.Val
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+		}
+		ans = append(ans, float64(sum)/float64(size))
+	}
+	return ans
+}
+~~~
+
+##### 429.[N叉树的层序遍历](https://leetcode.cn/problems/n-ary-tree-level-order-traversal/)
+
+~~~go
+package main
+
+type Node struct {
+	Val      int
+	Children []*Node
+}
+
+func levelOrder(root *Node) [][]int {
+	if root == nil {
+		return nil
+	}
+	queue := []*Node{root}
+	ans := [][]int{}
+	for len(queue) > 0 {
+		levelSize := len(queue)
+		level := []int{}
+		for i := 0; i < levelSize; i++ {
+			node := queue[0]
+			level = append(level, node.Val)
+			queue = queue[1:]
+			for _, child := range node.Children {
+				queue = append(queue, child)
+			}
+		}
+		ans = append(ans, level)
+	}
+	return ans
+}
+
+~~~
+
+##### 515.[在每个树行中找最大值](https://leetcode.cn/problems/find-largest-value-in-each-tree-row/description/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func largestValues(root *TreeNode) []int {
+	if root == nil {
+		return nil
+	}
+	var ans []int
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		size := len(queue)
+		maxVal := queue[0].Val
+		for i := 0; i < size; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+			if node.Val > maxVal {
+				maxVal = node.Val
+			}
+		}
+		ans = append(ans, maxVal)
+	}
+	return ans
+}
+~~~
+
+##### 116.[填充每一个节点的下一个右侧节点指针](https://leetcode.cn/problems/populating-next-right-pointers-in-each-node/description/)
+
+**只使用常量空间思路**：
+
+**利用已经建立的横向连接（`next` 指针）来作为跳板，为下一层建立新的连接**，从而避免了使用队列等额外空间。
+
+**利用父节点层已经建立好的 `next` 链表，来为子节点层搭建跨越父节点的连接**。
+
+我们现在有两个基本的连接操作：
+
+1. **连接同一个父节点下的两个子节点**： `node.left.next = node.right`
+2. **连接不同父节点下的两个子节点**： `node.right.next = node.next.left` (这只有在 `node.next` 存在时才能做)
+
+想象一下，我们有一个指针，就叫 `level_start` 吧，它指向每一层的最左边的节点（比如第 0 层的节点 1，第 1 层的节点 2，第 2 层的节点 4）。
+
+我们还需要另一个指针，叫 `current`，它在 `level_start` 所在的这一层水平移动，利用 `next` 指针从左到右处理每一个节点。
+
+当 `current` 指针通过 `next` 链接把一整层都跑完后，它会变成 `nil`，内层循环就结束了。这时候，我们只需要把 `level_start` 指针移动到它左孩子的身上 (`level_start = level_start.left`)，就自然地来到了下一层的起点。
+
+你现在已经掌握了 O(1) 空间解法的所有核心逻辑：
+
+1. **外层循环**：从 `root` 开始，只要当前层 (`level_start`) 不是 `nil`，就一直循环下去。
+2. **内层循环**：用一个 `current` 指针，从 `level_start` 开始，利用 `next` 指针在当前层上从左到右移动。
+3. **连接操作**：在内层循环中，对每一个 `current` 节点，执行我们之前讨论的两种连接：
+   - 连接它自己的左右孩子：`current.left.next = current.right`
+   - 连接它右孩子和它 `next` 邻居的左孩子：`current.right.next = current.next.left`
+
+~~~go
+package main
+
+type Node struct {
+	Val   int
+	Left  *Node
+	Right *Node
+	Next  *Node
+}
+
+// 空间复杂度 O(W),其中 W 是树的最大宽度（在完美二叉树中大约是 N/2 个节点）。
+//func connect(root *Node) *Node {
+//	if root == nil {
+//		return nil
+//	}
+//	queue := []*Node{root}
+//	for len(queue) > 0 {
+//		size := len(queue)
+//		for i := 0; i < size; i++ {
+//			node := queue[0]
+//			queue = queue[1:]
+//			if node.Left != nil {
+//				queue = append(queue, node.Left)
+//			}
+//			if node.Right != nil {
+//				queue = append(queue, node.Right)
+//			}
+//			if i < size-1 {
+//				node.Next = queue[0]
+//			}
+//		}
+//	}
+//	return root
+//}
+
+// 只使用常量级额外空间
+func connect(root *Node) *Node {
+	if root == nil {
+		return nil
+	}
+	levelStart := root
+	for levelStart.Left != nil {
+		current := levelStart
+		for current != nil {
+			current.Left.Next = current.Right
+			if current.Next != nil {
+				current.Right.Next = current.Next.Left
+			}
+			current = current.Next
+		}
+		levelStart = levelStart.Left
+	}
+	return root
+}
+~~~
+
 
 
 ## 三、设计类问题
