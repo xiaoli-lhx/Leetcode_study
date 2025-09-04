@@ -2292,6 +2292,72 @@ func connect(root *Node) *Node {
 }
 ~~~
 
+##### 117.[填充每一个节点的下一个右侧节点指针II](https://leetcode.cn/problems/populating-next-right-pointers-in-each-node-ii/description/)
+
+我们用一个 `levelStart` 指针来指向我们**当前正在遍历**的这一层的头节点，初始时 `levelStart = root`。
+
+启动一个外层循环，只要 `levelStart` 不为 `nil`，就说明还有层需要处理。
+
+在**每一层**的开始，我们创建两个辅助指针：
+
+- 一个哨兵（或叫哑节点）`nextLevelHead`，它的值不重要。
+- 一个 `tail` 指针，初始时指向 `nextLevelHead`。
+
+然后，用一个 `current` 指针从 `levelStart` 开始，在当前层上利用 `next` 指针从左到右移动。
+
+在 `current` 移动的过程中，不断检查它的左、右孩子：
+
+- 如果孩子存在，就用 `tail` 指针执行我们刚才说的那两步操作（连接、移动），把孩子串在 `nextLevelHead` 后面。
+
+当 `current` 遍历完当前层后，下一层的所有节点就已经被 `nextLevelHead` 串成了一个完整的链表。下一层的真正头节点就是 `nextLevelHead.next`。
+
+我们让 `levelStart = nextLevelHead.next`，这样 `levelStart` 就移动到了下一层的开头，准备开始新一轮的大循环。
+
+**`levelStart`**: 就像一个电梯，每一轮大循环结束，它就下降一层，指向该层的第一个节点。
+
+**`nextLevelHead` 和 `tail`**: 这是每一层循环内部最关键的工具。`nextLevelHead` 像一个固定的锚点，始终不动。`tail` 就像穿针引线的手，从这个锚点出发，每找到一个子节点，就把它缝合到链表的末尾，然后自己移动到新的末尾位置。
+
+**`current`**: 就像一个扫描仪，在 `levelStart` 所在的楼层，从左到右平移，检查每个房间（节点）里是否有孩子需要被连接。
+
+**`levelStart = nextLevelHead.Next`**: 这是“电梯下降”的关键。当 `current` 把一层楼都扫描完后，`tail` 已经把下一层的所有孩子都串好了。`nextLevelHead` 的 `Next` 就指向了这个新链表的头，我们把 `levelStart` 更新为这个头，就完成了向下一层的移动。
+
+~~~go
+package main
+
+type Node struct {
+	Val   int
+	Left  *Node
+	Right *Node
+	Next  *Node
+}
+
+func connect(root *Node) *Node {
+	if root == nil {
+		return nil
+	}
+	levelStart := root
+	for levelStart != nil {
+		nextLevelStart := &Node{}
+		tail := nextLevelStart
+		current := levelStart
+		for current != nil {
+			if current.Left != nil {
+				tail.Next = current.Left
+				tail = tail.Next
+			}
+			if current.Right != nil {
+				tail.Next = current.Right
+				tail = tail.Next
+			}
+			current = current.Next
+		}
+		levelStart = nextLevelStart.Next
+	}
+	return root
+}
+
+~~~
+
 
 
 ## 三、设计类问题
