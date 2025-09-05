@@ -2358,6 +2358,81 @@ func connect(root *Node) *Node {
 
 ~~~
 
+##### 104.[二叉树的最大深度](https://leetcode.cn/problems/maximum-depth-of-binary-tree/description/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func maxDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	count := 0
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		length := len(queue)
+		for i := 0; i < length; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+		}
+		count++
+	}
+	return count
+}
+~~~
+
+##### 111.[二叉树的最小深度](https://leetcode.cn/problems/minimum-depth-of-binary-tree/description/)
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+
+func minDepth(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	count := 0
+	queue := []*TreeNode{root}
+	for len(queue) > 0 {
+		length := len(queue)
+		count++
+		for i := 0; i < length; i++ {
+			node := queue[0]
+			queue = queue[1:]
+			if node.Left != nil {
+				queue = append(queue, node.Left)
+			}
+			if node.Right != nil {
+				queue = append(queue, node.Right)
+			}
+			if node.Left == nil && node.Right == nil {
+				return count
+			}
+		}
+
+	}
+	return count
+}
+
+~~~
+
 
 
 ## 三、设计类问题
