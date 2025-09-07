@@ -2478,6 +2478,46 @@ func invertTree(root *TreeNode) *TreeNode {
 
 ~~~
 
+#### 101.[对称二叉树](https://leetcode.cn/problems/symmetric-tree/)
+
+**思路**：
+
+比较“外侧”和“内侧”
+
+外侧：左子树的左子节点和右子树的右子节点
+
+内侧：左子树的右子节点和右子树的左子节点
+
+- [ ] 判断顺序，是先序，中序还是后序？为什么？
+- [ ] 递归写法
+
+~~~go
+package main
+
+type TreeNode struct {
+	Val   int
+	Left  *TreeNode
+	Right *TreeNode
+}
+// 递归
+func defs(left *TreeNode, right *TreeNode) bool {
+	if left == nil && right == nil {
+		return true
+	}
+	if left == nil || right == nil {
+		return false
+	}
+	if left.Val != right.Val {
+		return false
+	}
+	return defs(left.Left, right.Right) && defs(left.Right, right.Left)
+}
+func isSymmetric(root *TreeNode) bool {
+	return defs(root.Left, root.Right)
+}
+
+~~~
+
 
 
 ## 三、设计类问题
