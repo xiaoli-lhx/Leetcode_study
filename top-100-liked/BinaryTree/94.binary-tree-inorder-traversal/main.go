@@ -6,22 +6,22 @@ type TreeNode struct {
 	Right *TreeNode
 }
 
-//func inorderTraversal(root *TreeNode) []int {
-//	var res []int
-//	var traversal func(node *TreeNode)
-//	traversal = func(node *TreeNode) {
-//		// 终止条件
-//		if node == nil {
-//			return
-//		}
-//		// 中序遍历
-//		traversal(node.Left)
-//		res = append(res, node.Val)
-//		traversal(node.Right)
-//	}
-//	traversal(root)
-//	return res
-//}
+func inorderTraversal1(root *TreeNode) []int {
+	var res []int
+	var traversal func(node *TreeNode)
+	traversal = func(node *TreeNode) {
+		// 终止条件
+		if node == nil {
+			return
+		}
+		// 中序遍历
+		traversal(node.Left)
+		res = append(res, node.Val)
+		traversal(node.Right)
+	}
+	traversal(root)
+	return res
+}
 
 // 迭代法
 func inorderTraversal(root *TreeNode) []int {

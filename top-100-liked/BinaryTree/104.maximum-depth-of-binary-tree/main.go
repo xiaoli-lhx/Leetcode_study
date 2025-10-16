@@ -6,6 +6,7 @@ type TreeNode struct {
 	Right *TreeNode
 }
 
+// BFS
 func maxDepth(root *TreeNode) int {
 	if root == nil {
 		return 0
@@ -27,4 +28,12 @@ func maxDepth(root *TreeNode) int {
 		count++
 	}
 	return count
+}
+
+// 递归 DFS
+func maxDepth2(root *TreeNode) int {
+	if root == nil {
+		return 0
+	}
+	return max(maxDepth2(root.Left), maxDepth2(root.Right)) + 1
 }
